@@ -30,7 +30,8 @@ import {
   CheckCircle2, 
   ShieldAlert, 
   Lock,
-  Smartphone
+  Smartphone,
+  FileDown
 } from "lucide-react";
 import BinanceOrderModal from "@/components/modals/BinanceOrderModal";
 import TooltipHelper from "@/components/ui/TooltipHelper";
@@ -578,6 +579,17 @@ export default function ZenTradeWidget() {
             <div className="px-3 py-2 bg-[#131926] border-b border-surface-border flex items-center justify-between">
               <span className="font-bold text-white text-xs">Proof-of-Accuracy Real-Market Audit</span>
               <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://salahquant-backend.onrender.com";
+                    window.open(`${backendUrl}/api/paper/report/pdf`, "_blank");
+                  }}
+                  className="flex items-center space-x-1 px-2 py-0.5 bg-accent-cyan/15 hover:bg-accent-cyan/25 text-accent-cyan rounded border border-accent-cyan/40 text-[10px] font-bold transition shadow-sm"
+                  title="Download Institutional AI Performance Audit PDF Report"
+                >
+                  <FileDown className="w-3 h-3" />
+                  <span>Export PDF Report</span>
+                </button>
                 <button
                   onClick={handleResetTrackRecord}
                   disabled={resettingRecord}

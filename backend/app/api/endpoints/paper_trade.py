@@ -106,3 +106,21 @@ async def reset_balance(req: ResetAccountRequest):
 async def reset_ai_signals():
     """Reset AI signal verification history to start fresh."""
     return paper_trade_service.reset_ai_signals()
+
+@router.get("/report/pdf")
+async def download_performance_pdf():
+    """Generate and download a comprehensive, verified AI Performance Audit PDF report."""
+    from fastapi.responses import Response
+    from app.services.pdf_report_service import pdf_report_service
+    try:
+        pdf_bytes = pdf_report_service.generate_performance_pdf()
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=MicroAlpha_AI_Performance_Report_{int(time.time())}.pdf"
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF report: {e}")
+
