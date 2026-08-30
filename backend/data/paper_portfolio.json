@@ -1,19 +1,21 @@
 {
-  "initial_balance": 25.0,
-  "cash_balance": 17.11655686,
-  "positions": {},
-  "trade_history": [
-    {
-      "id": "2a871e12",
-      "symbol": "XRPUSDT",
+  "initial_balance": 50.0,
+  "cash_balance": 44.0,
+  "positions": {
+    "BTCUSDT": {
+      "id": "9f8296d4",
+      "symbol": "BTCUSDT",
       "side": "LONG",
-      "entry_price": 78835.83,
-      "exit_price": 1.3986,
       "quantity": 0.0001,
-      "realized_pnl": -7.88,
-      "timestamp": 1788106316.4994943
+      "entry_price": 60000.0,
+      "current_price": 60000.0,
+      "stop_loss": null,
+      "take_profit": null,
+      "is_breakeven_locked": false,
+      "timestamp": 1788109360.5895166
     }
-  ],
+  },
+  "trade_history": [],
   "ai_signals": [
     {
       "id": "505e1fe5",
@@ -186,106 +188,10 @@
   ],
   "equity_curve": [
     {
-      "timestamp": 1788104213.1864343,
-      "equity": 25.0
-    },
-    {
-      "timestamp": 1788104274.9977915,
-      "equity": 25.0
-    },
-    {
-      "timestamp": 1788104346.7329047,
-      "equity": 25.0
-    },
-    {
-      "timestamp": 1788104407.0009434,
-      "equity": 25.0
-    },
-    {
-      "timestamp": 1788104469.7053318,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788104532.4607024,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788104593.1633098,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788104730.9000707,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788104793.236934,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788104855.2757273,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788104917.1202517,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788104977.1208365,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788105196.3877423,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788105257.999546,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788105318.0282829,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788105379.450043,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788105441.0359855,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788105504.0370984,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788105567.0238152,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788105627.028529,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788106060.727263,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788106121.9947183,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788106182.4513953,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788106242.4522212,
-      "equity": 17.12
-    },
-    {
-      "timestamp": 1788106302.9268146,
-      "equity": 17.12
+      "timestamp": 1788109360.5643888,
+      "equity": 50.0
     }
   ],
   "daily_drawdown_locked_until": null,
-  "last_updated": 1788106316.4994943
+  "last_updated": 1788109360.5895166
 }
