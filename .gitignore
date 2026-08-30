@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+backend/venv/
+.venv/
+venv/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env.local
+
+# Next.js Build Outputs
+.next/
+frontend/.next/
+out/
+build/
+dist/
+
+# Python Cache & Testing
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+backend/.pytest_cache/
+*.tmp
+*.log
+
+# Temporary Data
+backend/data/*.tmp
+scratch/
+backend/scratch/
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.swp

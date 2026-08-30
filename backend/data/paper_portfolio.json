@@ -1,0 +1,291 @@
+{
+  "initial_balance": 25.0,
+  "cash_balance": 17.11655686,
+  "positions": {},
+  "trade_history": [
+    {
+      "id": "2a871e12",
+      "symbol": "XRPUSDT",
+      "side": "LONG",
+      "entry_price": 78835.83,
+      "exit_price": 1.3986,
+      "quantity": 0.0001,
+      "realized_pnl": -7.88,
+      "timestamp": 1788106316.4994943
+    }
+  ],
+  "ai_signals": [
+    {
+      "id": "505e1fe5",
+      "timestamp": 1788056836.4982016,
+      "symbol": "ETHUSDT",
+      "action": "BUY",
+      "entry_price": 2453.74,
+      "stop_loss": 2439.63,
+      "take_profit_1": 2481.95,
+      "take_profit_2": 2496.06,
+      "confidence": 84,
+      "hold_time_label": "\u23f1\ufe0f Day Trade: 2-6 hours",
+      "timeframe_category": "DAY_TRADE",
+      "max_duration_sec": 21600,
+      "status": "EXPIRED",
+      "result_pnl_pct": 1.03,
+      "highest_price_seen": 2479.03,
+      "lowest_price_seen": 2453.74,
+      "exit_price": 2479.03,
+      "evaluated_at": 1788103851.8600397,
+      "proof_audit": {
+        "predicted_entry": 2453.74,
+        "predicted_tp1": 2481.95,
+        "predicted_sl": 2439.63,
+        "peak_favorable_price": 2479.03,
+        "deepest_adverse_price": 2453.74,
+        "real_market_verification": "TIME EXPIRED: Exit price at $2479.03"
+      }
+    },
+    {
+      "id": "c9aab912",
+      "timestamp": 1788056836.5203083,
+      "symbol": "ETHUSDT",
+      "action": "BUY",
+      "entry_price": 2453.74,
+      "stop_loss": 2439.63,
+      "take_profit_1": 2481.95,
+      "take_profit_2": 2496.06,
+      "confidence": 84,
+      "hold_time_label": "\u23f1\ufe0f Day Trade: 2-6 hours",
+      "timeframe_category": "DAY_TRADE",
+      "max_duration_sec": 21600,
+      "status": "EXPIRED",
+      "result_pnl_pct": 1.03,
+      "highest_price_seen": 2479.03,
+      "lowest_price_seen": 2453.74,
+      "exit_price": 2479.03,
+      "evaluated_at": 1788103851.8600397,
+      "proof_audit": {
+        "predicted_entry": 2453.74,
+        "predicted_tp1": 2481.95,
+        "predicted_sl": 2439.63,
+        "peak_favorable_price": 2479.03,
+        "deepest_adverse_price": 2453.74,
+        "real_market_verification": "TIME EXPIRED: Exit price at $2479.03"
+      }
+    },
+    {
+      "id": "7392af54",
+      "timestamp": 1788104426.4430084,
+      "symbol": "XRPUSDT",
+      "action": "BUY",
+      "entry_price": 1.4004,
+      "stop_loss": 1.378,
+      "take_profit_1": 1.425,
+      "take_profit_2": 1.45,
+      "confidence": 68,
+      "hold_time_label": "\u23f1\ufe0f Day Trade: 2-6 hours",
+      "timeframe_category": "DAY_TRADE",
+      "max_duration_sec": 21600,
+      "status": "ACTIVE",
+      "result_pnl_pct": 0.0,
+      "highest_price_seen": 1.4022,
+      "lowest_price_seen": 1.3964,
+      "exit_price": null,
+      "evaluated_at": null,
+      "proof_audit": {
+        "predicted_entry": 1.4004,
+        "predicted_tp1": 1.425,
+        "predicted_sl": 1.378,
+        "peak_favorable_price": 1.4022,
+        "deepest_adverse_price": 1.3964,
+        "real_market_verification": "MONITORING_LIVE_BINANCE_TICKS"
+      }
+    },
+    {
+      "id": "5971cae6",
+      "timestamp": 1788104426.4708977,
+      "symbol": "XRPUSDT",
+      "action": "BUY",
+      "entry_price": 1.4004,
+      "stop_loss": 1.378,
+      "take_profit_1": 1.425,
+      "take_profit_2": 1.45,
+      "confidence": 68,
+      "hold_time_label": "\u23f1\ufe0f Day Trade: 2-6 hours",
+      "timeframe_category": "DAY_TRADE",
+      "max_duration_sec": 21600,
+      "status": "ACTIVE",
+      "result_pnl_pct": 0.0,
+      "highest_price_seen": 1.4022,
+      "lowest_price_seen": 1.3964,
+      "exit_price": null,
+      "evaluated_at": null,
+      "proof_audit": {
+        "predicted_entry": 1.4004,
+        "predicted_tp1": 1.425,
+        "predicted_sl": 1.378,
+        "peak_favorable_price": 1.4022,
+        "deepest_adverse_price": 1.3964,
+        "real_market_verification": "MONITORING_LIVE_BINANCE_TICKS"
+      }
+    },
+    {
+      "id": "a29899dd",
+      "timestamp": 1788106309.699997,
+      "symbol": "XRPUSDT",
+      "action": "BUY",
+      "entry_price": 1.3985,
+      "stop_loss": 1.39,
+      "take_profit_1": 1.42,
+      "take_profit_2": 1.44,
+      "confidence": 83,
+      "hold_time_label": "\u23f1\ufe0f Day Trade: 2-6 hours",
+      "timeframe_category": "DAY_TRADE",
+      "max_duration_sec": 21600,
+      "status": "ACTIVE",
+      "result_pnl_pct": 0.0,
+      "highest_price_seen": 1.3986,
+      "lowest_price_seen": 1.3984,
+      "exit_price": null,
+      "evaluated_at": null,
+      "proof_audit": {
+        "predicted_entry": 1.3985,
+        "predicted_tp1": 1.42,
+        "predicted_sl": 1.39,
+        "peak_favorable_price": 1.3986,
+        "deepest_adverse_price": 1.3984,
+        "real_market_verification": "MONITORING_LIVE_BINANCE_TICKS"
+      }
+    },
+    {
+      "id": "389f4b7a",
+      "timestamp": 1788106310.1014218,
+      "symbol": "XRPUSDT",
+      "action": "BUY",
+      "entry_price": 1.3985,
+      "stop_loss": 1.39,
+      "take_profit_1": 1.42,
+      "take_profit_2": 1.44,
+      "confidence": 83,
+      "hold_time_label": "\u23f1\ufe0f Day Trade: 2-6 hours",
+      "timeframe_category": "DAY_TRADE",
+      "max_duration_sec": 21600,
+      "status": "ACTIVE",
+      "result_pnl_pct": 0.0,
+      "highest_price_seen": 1.3986,
+      "lowest_price_seen": 1.3984,
+      "exit_price": null,
+      "evaluated_at": null,
+      "proof_audit": {
+        "predicted_entry": 1.3985,
+        "predicted_tp1": 1.42,
+        "predicted_sl": 1.39,
+        "peak_favorable_price": 1.3986,
+        "deepest_adverse_price": 1.3984,
+        "real_market_verification": "MONITORING_LIVE_BINANCE_TICKS"
+      }
+    }
+  ],
+  "equity_curve": [
+    {
+      "timestamp": 1788104213.1864343,
+      "equity": 25.0
+    },
+    {
+      "timestamp": 1788104274.9977915,
+      "equity": 25.0
+    },
+    {
+      "timestamp": 1788104346.7329047,
+      "equity": 25.0
+    },
+    {
+      "timestamp": 1788104407.0009434,
+      "equity": 25.0
+    },
+    {
+      "timestamp": 1788104469.7053318,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788104532.4607024,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788104593.1633098,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788104730.9000707,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788104793.236934,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788104855.2757273,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788104917.1202517,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788104977.1208365,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788105196.3877423,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788105257.999546,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788105318.0282829,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788105379.450043,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788105441.0359855,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788105504.0370984,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788105567.0238152,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788105627.028529,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788106060.727263,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788106121.9947183,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788106182.4513953,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788106242.4522212,
+      "equity": 17.12
+    },
+    {
+      "timestamp": 1788106302.9268146,
+      "equity": 17.12
+    }
+  ],
+  "daily_drawdown_locked_until": null,
+  "last_updated": 1788106316.4994943
+}
