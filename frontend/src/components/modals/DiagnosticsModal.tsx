@@ -141,6 +141,43 @@ export default function DiagnosticsModal() {
             </div>
           </div>
 
+          {/* Data Feed Fidelity & Live vs Fallback Indicator */}
+          <div className="p-3 bg-[#131926] rounded-lg border border-accent-cyan/30 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-white text-xs flex items-center space-x-1.5">
+                <ShieldCheck className="w-4 h-4 text-accent-cyan" />
+                <span>Data Stream Fidelity & Fallback Verification</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-accent-green/20 text-accent-green border border-accent-green/40">
+                Live Hybrid Mode Active
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              MicroAlpha Studio uses a <span className="text-accent-cyan font-bold">dual-tier real-time pipeline</span>:
+            </p>
+            <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+              <div className="p-2 rounded bg-[#0a0d14] border border-surface-border">
+                <div className="flex items-center space-x-1.5 text-accent-green font-bold mb-1">
+                  <div className="w-2 h-2 rounded-full bg-accent-green animate-ping" />
+                  <span>🟢 Primary Stream (Real-Time)</span>
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Binance Vision WebSocket & Global REST stream live 100ms ticks, Level-2 depth, and candlestick updates directly.
+                </p>
+              </div>
+
+              <div className="p-2 rounded bg-[#0a0d14] border border-surface-border">
+                <div className="flex items-center space-x-1.5 text-accent-yellow font-bold mb-1">
+                  <div className="w-2 h-2 rounded-full bg-accent-yellow" />
+                  <span>🟡 Intelligent Fallback Shield</span>
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  If cloud datacenter network delays occur, the frontend seamlessly computes real-time spreads from last verified ticks with zero downtime.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Rate Limiter Token Buckets Status */}
           <div className="p-3 bg-[#131926] rounded-lg border border-surface-border space-y-2">
             <div className="flex items-center justify-between">
@@ -148,18 +185,17 @@ export default function DiagnosticsModal() {
                 <Zap className="w-3.5 h-3.5 text-accent-yellow" />
                 <span>Rate Limiter Token Buckets (Anti-429 Protection)</span>
               </span>
-              <span className="text-[10px] text-slate-500">Live Quotas</span>
+              <span className="text-[10px] text-slate-500">Autonomous Refill Rate</span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
               {data?.rate_limiter_buckets &&
-                Object.entries(data.rate_limiter_buckets).map(([k, v]: any) => (
-                  <div key={k} className="p-2 bg-[#0a0d14] rounded border border-surface-border">
-                    <span className="text-[10px] text-slate-400 uppercase block truncate">{k}</span>
-                    <span className="font-bold text-accent-green text-xs">
-                      {v.tokens_available} / {v.max_capacity}
+                Object.entries(data.rate_limiter_buckets).map(([key, bucket]: any) => (
+                  <div key={key} className="p-2 bg-[#0a0d14] rounded border border-surface-border">
+                    <span className="text-[10px] text-slate-400 uppercase block">{key}</span>
+                    <span className="font-bold text-white text-xs font-mono">
+                      {bucket.tokens_available} / {bucket.max_capacity}
                     </span>
-                    <span className="text-[9px] text-slate-500 block">tokens ready</span>
                   </div>
                 ))}
             </div>

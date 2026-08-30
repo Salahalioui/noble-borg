@@ -15,13 +15,35 @@ class NewsService:
 
     async def get_google_news(self, query: str = "stock market crypto", limit: int = 15) -> List[Dict[str, Any]]:
         """Fetch real-time news headlines from Google News RSS feed, filtered against exchange spam."""
-        clean_q = query.replace("USDT", " crypto").replace("usdt", " crypto")
-        cache_key = f"news:google:{clean_q.lower()}:{limit}"
+        clean_q = query.replace("USDT", "").replace("usdt", "").replace("crypto market", "").strip().upper()
+        symbol_map = {
+            "BTC": "Bitcoin crypto market",
+            "ETH": "Ethereum crypto news",
+            "SOL": "Solana crypto market",
+            "SUI": "Sui Network crypto",
+            "NEAR": "Near Protocol crypto",
+            "PEPE": "Pepe memecoin crypto",
+            "RENDER": "Render Token AI crypto",
+            "INJ": "Injective protocol crypto",
+            "XRP": "Ripple XRP crypto",
+            "DOGE": "Dogecoin crypto",
+            "PLTR": "Palantir stock market",
+            "SOFI": "SoFi Technologies stock",
+            "HOOD": "Robinhood Markets stock",
+            "MARA": "Marathon Digital Bitcoin mining",
+            "RIOT": "Riot Platforms Bitcoin mining",
+            "NVDA": "Nvidia AI stock",
+            "AAPL": "Apple Inc stock",
+            "TSLA": "Tesla stock news",
+            "MSFT": "Microsoft AI stock"
+        }
+        search_query = symbol_map.get(clean_q, f"{clean_q} financial markets" if clean_q else "stock market crypto economy")
+        cache_key = f"news:google:{search_query.lower()}:{limit}"
         cached = await cache.get(cache_key)
         if cached:
             return cached
 
-        url = f"https://news.google.com/rss/search?q={clean_q.replace(' ', '+')}&hl=en-US&gl=US&ceid=US:en"
+        url = f"https://news.google.com/rss/search?q={search_query.replace(' ', '+')}&hl=en-US&gl=US&ceid=US:en"
         
         def _parse_feed():
             feed = feedparser.parse(url)

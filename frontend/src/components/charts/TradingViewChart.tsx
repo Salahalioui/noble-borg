@@ -53,23 +53,36 @@ export default function TradingViewChart() {
     ? ["1m", "5m", "15m", "1h", "4h", "1d"]
     : ["1m", "5m", "15m", "1h", "1d"];
 
-  // Direct public browser fallback if local backend is booting
+  const lastCandleRef = useRef<any>(null);
+  const [dataSource, setDataSource] = useState<"live" | "fallback">("live");
+
+  // Direct public browser fallback
   const fetchDirectBinanceKlines = async (sym: string, tf: string) => {
-    try {
-      const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym.toUpperCase()}&interval=${tf}&limit=120`);
-      if (!res.ok) return null;
-      const data = await res.json();
-      return data.map((c: any) => ({
-        time: Math.floor(c[0] / 1000),
-        open: parseFloat(c[1]),
-        high: parseFloat(c[2]),
-        low: parseFloat(c[3]),
-        close: parseFloat(c[4]),
-        volume: parseFloat(c[5]),
-      }));
-    } catch {
-      return null;
+    const endpoints = [
+      `https://data-api.binance.vision/api/v3/klines?symbol=${sym.toUpperCase()}&interval=${tf}&limit=120`,
+      `https://api.binance.com/api/v3/klines?symbol=${sym.toUpperCase()}&interval=${tf}&limit=120`
+    ];
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            return data.map((c: any) => ({
+              time: Math.floor(c[0] / 1000),
+              open: parseFloat(c[1]),
+              high: parseFloat(c[2]),
+              low: parseFloat(c[3]),
+              close: parseFloat(c[4]),
+              volume: parseFloat(c[5]),
+            }));
+          }
+        }
+      } catch {
+        continue;
+      }
     }
+    return null;
   };
 
   // Load candle data with multi-tier fallback (Updates existing series without rebuilding chart)
@@ -78,16 +91,20 @@ export default function TradingViewChart() {
     setLoading(true);
     try {
       let candles: any[] = [];
+      let isLive = false;
+
       if (isCrypto) {
-        // Try backend first
+        // 1. Try backend first
         const data = await fetchCryptoKlines(targetSymbol, timeframe, 150).catch(() => null);
         if (data?.candles && data.candles.length > 0) {
           candles = data.candles;
+          isLive = true;
         } else {
-          // Direct Binance fallback
+          // 2. Direct Binance public fallback
           const direct = await fetchDirectBinanceKlines(targetSymbol, timeframe);
           if (direct && direct.length > 0) {
             candles = direct;
+            isLive = true;
           }
         }
       } else {
@@ -95,22 +112,27 @@ export default function TradingViewChart() {
         const data = await fetchStockHistory(targetSymbol, period, timeframe).catch(() => null);
         if (data?.candles && data.candles.length > 0) {
           candles = data.candles;
+          isLive = true;
         }
       }
 
       // Check if user switched symbol while fetching
       if (symbolRef.current !== targetSymbol) return;
 
-      // If still empty, use fallback generator so chart is NEVER black
+      // 3. If still empty, use fallback generator so chart is NEVER black
       if (candles.length === 0) {
         const base = currentPrice && currentPrice > 0 ? currentPrice : (isCrypto ? 1.0 : 50.0);
         candles = generateFallbackCandles(base, 80);
+        isLive = false;
       }
+
+      setDataSource(isLive ? "live" : "fallback");
 
       // Safely update chart series without disposing the canvas
       if (candleSeriesRef.current && volumeSeriesRef.current && chartRef.current && candles.length > 0) {
         try {
           candleSeriesRef.current.setData(candles);
+          lastCandleRef.current = { ...candles[candles.length - 1] };
 
           const volumeData = candles.map((c) => ({
             time: c.time,
@@ -130,7 +152,7 @@ export default function TradingViewChart() {
         setLoading(false);
       }
     }
-  }, [activeSymbol, isCrypto, timeframe, currentPrice]);
+  }, [activeSymbol, isCrypto, timeframe]);
 
   // 1. Initialize TradingView chart instance ONCE on mount
   useEffect(() => {
@@ -221,18 +243,16 @@ export default function TradingViewChart() {
     loadChartData();
   }, [loadChartData]);
 
-  // 3. Real-time tick update to active candle
+  // 3. Real-time tick update to active candle in-place
   useEffect(() => {
-    if (!candleSeriesRef.current || !currentPrice || !chartRef.current) return;
+    if (!candleSeriesRef.current || !currentPrice || !lastCandleRef.current) return;
     try {
-      const now = Math.floor(Date.now() / 1000);
-      candleSeriesRef.current.update({
-        time: (now - (now % 60)) as any, // round to current minute
-        open: currentPrice,
-        high: currentPrice * 1.0005,
-        low: currentPrice * 0.9995,
-        close: currentPrice,
-      });
+      const current = lastCandleRef.current;
+      current.close = currentPrice;
+      if (currentPrice > current.high) current.high = currentPrice;
+      if (currentPrice < current.low) current.low = currentPrice;
+
+      candleSeriesRef.current.update(current);
     } catch {
       // ignore
     }
@@ -272,6 +292,20 @@ export default function TradingViewChart() {
           >
             {isCrypto ? "CRYPTO SPOT" : "US EQUITY"}
           </span>
+          
+          {/* Real-time Data Source Badge */}
+          <span
+            className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-semibold flex items-center space-x-1 ${
+              dataSource === "live"
+                ? "bg-accent-green/10 text-accent-green border border-accent-green/30"
+                : "bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/30"
+            }`}
+            title={dataSource === "live" ? "Streaming Live Market Feed" : "Using Cached/Fallback Feed"}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${dataSource === "live" ? "bg-accent-green animate-ping" : "bg-accent-yellow"}`} />
+            <span>{dataSource === "live" ? "LIVE FEED" : "FALLBACK"}</span>
+          </span>
+
           {loading && (
             <RefreshCw className="w-3 h-3 text-accent-cyan animate-spin" />
           )}

@@ -27,8 +27,9 @@ function generateDefaultDepth(price: number): { bids: [number, number][]; asks: 
 
 export default function OrderBookWidget() {
   const { activeSymbol, isCrypto, currentPrice } = useTradingStore();
-  const [bids, setBids] = useState<[number, number][]>([]);
-  const [asks, setAsks] = useState<[number, number][]>([]);
+  const initialDepth = generateDefaultDepth(currentPrice || 78950);
+  const [bids, setBids] = useState<[number, number][]>(initialDepth.bids);
+  const [asks, setAsks] = useState<[number, number][]>(initialDepth.asks);
 
   useEffect(() => {
     let isMounted = true;
@@ -36,12 +37,31 @@ export default function OrderBookWidget() {
     async function loadDepth() {
       if (!isCrypto) return;
       try {
+        // 1. Try backend
         const data = await fetchCryptoDepth(activeSymbol, 8).catch(() => null);
         if (isMounted && data?.bids && data.bids.length > 0) {
           setBids(data.bids);
           setAsks(data.asks);
-        } else if (isMounted) {
-          // Direct fallback
+          return;
+        }
+
+        // 2. Try direct Binance Vision public API
+        try {
+          const directRes = await fetch(`https://data-api.binance.vision/api/v3/depth?symbol=${activeSymbol.toUpperCase()}&limit=8`);
+          if (directRes.ok) {
+            const raw = await directRes.json();
+            if (isMounted && raw?.bids && raw?.asks) {
+              setBids(raw.bids.map((b: any) => [parseFloat(b[0]), parseFloat(b[1])]));
+              setAsks(raw.asks.map((a: any) => [parseFloat(a[0]), parseFloat(a[1])]));
+              return;
+            }
+          }
+        } catch {
+          // continue to generator
+        }
+
+        // 3. Realistic dynamic generator around current price
+        if (isMounted) {
           const fallback = generateDefaultDepth(currentPrice);
           setBids(fallback.bids);
           setAsks(fallback.asks);
