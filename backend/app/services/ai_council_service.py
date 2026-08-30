@@ -1,5 +1,6 @@
 import json
 import asyncio
+import base64
 from typing import Dict, Any, Optional
 from app.core.config import settings
 from app.core.cache import cache
@@ -37,7 +38,8 @@ class AICouncilService:
         technicals: Dict[str, Any], 
         news_headlines: list, 
         user_query: Optional[str] = None,
-        user_capital: float = 50.0
+        user_capital: float = 50.0,
+        image_base64: Optional[str] = None
     ) -> Dict[str, Any]:
         """Conduct a Tri-Agent Council debate to generate an honest, beginner-friendly, and actionable trading signal."""
         
@@ -60,6 +62,8 @@ class AICouncilService:
         prompt = f"""
 You are the Chief Investment Committee conducting a rigorous, BRUTALLY HONEST, and beginner-friendly trading evaluation for ticker: {symbol_upper}.
 
+CURRENT REAL-TIME MARKET PRICE: ${price:,.2f}
+
 CURRENT MARKET TECHNICAL DATA:
 {json.dumps(technicals, indent=2)}
 
@@ -71,9 +75,10 @@ USER QUESTION / FOCUS:
 {user_query or "Provide comprehensive trade thesis, beginner explanation, and execution plan"}
 
 CRITICAL GUIDELINES FOR YOUR RESPONSE:
-1. BE 100% BRUTALLY HONEST: Never encourage reckless trades or false certainty. If the market is choppy, overbought, or lacking a clear edge, explicitly tell the user: "HOLD CASH / DO NOT FOMO". Protect the user's capital above all else.
-2. BEGINNER-FRIENDLY CLARITY: Explain what is happening in simple, clear English without confusing institutional jargon. Explain WHY we are entering, WHERE the danger is, and HOW long this trade will likely take.
-3. CONCRETE EXECUTION PLAN FOR ${user_capital:.2f} CAPITAL:
+1. HARD PRICE ANCHORING: The current market price is EXACTLY ${price:,.2f}. All Entry, Stop Loss, and Take Profit levels MUST be mathematically consistent with ${price:,.2f}. (For BUY: TP > {price} > SL; For SELL: SL > {price} > TP).
+2. BE 100% BRUTALLY HONEST: Never encourage reckless trades or false certainty. If the market is choppy, overbought, or lacking a clear edge, explicitly tell the user: "HOLD CASH / DO NOT FOMO". Protect the user's capital above all else.
+3. BEGINNER-FRIENDLY CLARITY: Explain what is happening in simple, clear English without confusing institutional jargon. Explain WHY we are entering, WHERE the danger is, and HOW long this trade will likely take.
+4. CONCRETE EXECUTION PLAN FOR ${user_capital:.2f} CAPITAL:
    - Provide exact numbers for Entry Range, Stop Loss (with % drop), Take Profit 1 (% gain), Take Profit 2, Estimated Trade Duration, and Risk Level.
    - Provide exact Dollar Risk/Reward breakdown based on the user's ${user_capital:.2f} capital so they know EXACTLY how many cents/dollars they risk to grow their account safely.
 
@@ -113,12 +118,25 @@ You MUST respond strictly with a valid JSON object matching this schema:
 }}
 """
 
+        contents_payload = [prompt]
+        if image_base64:
+            try:
+                clean_b64 = image_base64.split(",")[-1] if "," in image_base64 else image_base64
+                img_bytes = base64.b64decode(clean_b64)
+                image_part = types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg")
+                contents_payload = [
+                    image_part,
+                    "LIVE CANDLESTICK CHART CANVAS ATTACHED: Inspect the attached real-time chart canvas for wick rejections, momentum candle structures, volume bars, and support/resistance boundaries.\n\n" + prompt
+                ]
+            except Exception as img_err:
+                print(f"[AICouncilService] Error attaching chart canvas: {img_err}")
+
         def _call_gemini():
             for model_name in [self.primary_model, self.fallback_model]:
                 try:
                     response = self.client.models.generate_content(
                         model=model_name,
-                        contents=prompt,
+                        contents=contents_payload,
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json",
                             temperature=0.2
@@ -137,7 +155,7 @@ You MUST respond strictly with a valid JSON object matching this schema:
             return result
         except Exception as e:
             print(f"[AICouncilService] Gemini API error, falling back to rule engine: {e}")
-            return self._generate_rule_based_council_signal(symbol_upper, technicals, news_headlines, user_query)
+            return self._generate_rule_based_council_signal(symbol_upper, technicals, news_headlines, user_query, user_capital)
 
     def _generate_rule_based_council_signal(
         self, 

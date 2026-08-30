@@ -12,7 +12,16 @@ export default function AICopilotWidget() {
   const handleTriggerDebate = async (customQuery?: string) => {
     setIsDebatingAI(true);
     try {
-      const result = await runAICouncilDebate(activeSymbol, isCrypto, customQuery || query);
+      let chartImage: string | undefined = undefined;
+      const canvas = document.querySelector("canvas");
+      if (canvas) {
+        try {
+          chartImage = canvas.toDataURL("image/jpeg", 0.75);
+        } catch {
+          // ignore cross-origin
+        }
+      }
+      const result = await runAICouncilDebate(activeSymbol, isCrypto, customQuery || query, 50.0, chartImage);
       setAIDebateResult(result);
     } catch (err) {
       console.error("AI Council Debate error:", err);

@@ -15,6 +15,7 @@ class CouncilDebateRequest(BaseModel):
     is_crypto: bool = True
     user_query: Optional[str] = None
     user_capital: float = 50.0
+    image_base64: Optional[str] = None
 
 class ChartVisionRequest(BaseModel):
     symbol: str
@@ -23,7 +24,7 @@ class ChartVisionRequest(BaseModel):
 @router.post("/council-debate")
 async def conduct_council_debate(payload: CouncilDebateRequest):
     """Run a Tri-Agent Council Debate (Bull vs Bear vs Chief Risk Officer) and return structured trade signals."""
-    return await _process_debate(payload.symbol, payload.is_crypto, payload.user_query, payload.user_capital)
+    return await _process_debate(payload.symbol, payload.is_crypto, payload.user_query, payload.user_capital, payload.image_base64)
 
 @router.get("/council-debate")
 async def conduct_council_debate_get(
@@ -33,9 +34,9 @@ async def conduct_council_debate_get(
     user_capital: float = Query(50.0, description="User's starting trading capital in USD")
 ):
     """GET endpoint for Tri-Agent Council debate."""
-    return await _process_debate(symbol, is_crypto, user_query, user_capital)
+    return await _process_debate(symbol, is_crypto, user_query, user_capital, None)
 
-async def _process_debate(symbol: str, is_crypto: bool, user_query: Optional[str], user_capital: float = 50.0):
+async def _process_debate(symbol: str, is_crypto: bool, user_query: Optional[str], user_capital: float = 50.0, image_base64: Optional[str] = None):
     sym = symbol.upper()
     
     # 1. Fetch live candles & compute technical indicators
@@ -70,13 +71,14 @@ async def _process_debate(symbol: str, is_crypto: bool, user_query: Optional[str
     news_items = await news_service.get_google_news(query=f"{sym} news", limit=5)
     headlines = [n["title"] for n in news_items] if news_items else []
     
-    # 3. Conduct Tri-Agent Council Analysis
+    # 3. Conduct Tri-Agent Council Analysis with live chart canvas
     debate_result = await ai_council_service.analyze_trade_setup(
         symbol=sym,
         technicals=technicals,
         news_headlines=headlines,
         user_query=user_query,
-        user_capital=user_capital
+        user_capital=user_capital,
+        image_base64=image_base64
     )
     
     # 4. Automatically record signal for multi-timeframe accuracy tracking

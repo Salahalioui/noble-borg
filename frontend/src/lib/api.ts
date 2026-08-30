@@ -146,7 +146,8 @@ export async function runAICouncilDebate(
   symbol: string, 
   isCrypto: boolean = true, 
   userQuery?: string, 
-  userCapital: number = 50.0
+  userCapital: number = 50.0,
+  imageBase64?: string
 ) {
   const res = await fetch(`${BACKEND_URL}/api/ai/council-debate`, {
     method: "POST",
@@ -155,7 +156,8 @@ export async function runAICouncilDebate(
       symbol, 
       is_crypto: isCrypto, 
       user_query: userQuery,
-      user_capital: userCapital 
+      user_capital: userCapital,
+      image_base64: imageBase64
     }),
   });
   if (!res.ok) throw new Error("Failed to run AI Council debate");

@@ -80,7 +80,18 @@ export default function ZenTradeWidget() {
   const handleDebate = async () => {
     setIsDebatingAI(true);
     try {
-      const res = await runAICouncilDebate(activeSymbol, isCrypto, undefined, startingCapital);
+      // Capture live TradingView chart canvas screenshot for real-time visual momentum context
+      let chartImage: string | undefined = undefined;
+      const canvas = document.querySelector("canvas");
+      if (canvas) {
+        try {
+          chartImage = canvas.toDataURL("image/jpeg", 0.75);
+        } catch {
+          // ignore canvas capture if cross-origin
+        }
+      }
+
+      const res = await runAICouncilDebate(activeSymbol, isCrypto, undefined, startingCapital, chartImage);
       setAIDebateResult(res);
       await loadData();
     } catch (e) {

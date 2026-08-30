@@ -41,31 +41,33 @@ export default function GridContainer() {
 
       {activePreset === "scalper" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 p-3 min-h-[calc(100vh-4rem)]">
+          {/* Main Fast-Execution Chart (7 cols) */}
           <div className="lg:col-span-7 h-[580px] lg:h-[calc(100vh-5rem)]">
             <TradingViewChart />
           </div>
-          <div className="lg:col-span-3 h-[580px] lg:h-[calc(100vh-5rem)]">
-            <OrderBookWidget />
-          </div>
-          <div className="lg:col-span-2 h-[580px] lg:h-[calc(100vh-5rem)]">
-            <PaperPortfolioWidget />
+          {/* Scalper Command Deck (5 cols): L2 Order Depth + Spacious Scalp Sandbox */}
+          <div className="lg:col-span-5 flex flex-col space-y-3 h-[580px] lg:h-[calc(100vh-5rem)]">
+            <div className="h-[46%] min-h-[260px]">
+              <OrderBookWidget />
+            </div>
+            <div className="h-[54%] min-h-[300px]">
+              <PaperPortfolioWidget />
+            </div>
           </div>
         </div>
       )}
 
       {activePreset === "ai_focus" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 p-3 min-h-[calc(100vh-4rem)]">
-          <div className="lg:col-span-5 h-[580px] lg:h-[calc(100vh-5rem)]">
+          <div className="lg:col-span-6 h-[580px] lg:h-[calc(100vh-5rem)]">
             <TradingViewChart />
           </div>
-          <div className="lg:col-span-4 h-[580px] lg:h-[calc(100vh-5rem)]">
-            <AICopilotWidget />
-          </div>
-          <div className="lg:col-span-3 h-[580px] lg:h-[calc(100vh-5rem)] flex flex-col space-y-3">
-            <div className="h-[55%]">
-              <OpportunityRadarWidget />
+          <div className="lg:col-span-6 h-[580px] lg:h-[calc(100vh-5rem)] flex flex-col space-y-3">
+            <div className="h-[58%]">
+              <ZenTradeWidget />
             </div>
-            <div className="h-[45%]">
+            <div className="h-[42%] grid grid-cols-2 gap-3">
+              <OpportunityRadarWidget />
               <NewsSentimentWidget />
             </div>
           </div>
@@ -102,40 +104,26 @@ export default function GridContainer() {
             <WhaleRadarWidget />
           </div>
           <div className="lg:col-span-3 h-[calc(100vh-5rem)]">
-            <AICopilotWidget />
+            <ZenTradeWidget />
           </div>
         </div>
       )}
 
       {activePreset === "standard" && (
-        <div className="p-3 space-y-3">
-          {/* Top Main Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-            <div className="lg:col-span-7 h-[540px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 p-3 min-h-[calc(100vh-4rem)]">
+          {/* Main Chart + Order Book (8 cols) */}
+          <div className="lg:col-span-8 flex flex-col space-y-3 h-[calc(100vh-5rem)]">
+            <div className="h-[62%]">
               <TradingViewChart />
             </div>
-            <div className="lg:col-span-2 h-[540px]">
+            <div className="h-[38%] grid grid-cols-2 gap-3">
               <OrderBookWidget />
-            </div>
-            <div className="lg:col-span-3 h-[540px]">
-              <AICopilotWidget />
-            </div>
-          </div>
-
-          {/* Bottom Auxiliary Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="h-[340px]">
-              <PaperPortfolioWidget />
-            </div>
-            <div className="h-[340px]">
               <NewsSentimentWidget />
             </div>
-            <div className="h-[340px]">
-              <MacroRadarWidget />
-            </div>
-            <div className="h-[340px]">
-              <WhaleRadarWidget />
-            </div>
+          </div>
+          {/* Right Zen AI & Execution (4 cols) */}
+          <div className="lg:col-span-4 h-[calc(100vh-5rem)]">
+            <ZenTradeWidget />
           </div>
         </div>
       )}
