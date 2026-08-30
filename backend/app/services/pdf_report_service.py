@@ -25,10 +25,10 @@ class PDFReportService:
         cash_balance = float(paper_trade_service.cash_balance)
         
         # Calculate statistics
-        evaluated_signals = [s for s in signals if s.get("status") in ["TP1_HIT", "TP2_HIT", "SL_HIT", "EXPIRED"]]
+        evaluated_signals = [s for s in signals if s.get("status") in ["HIT_TP", "HIT_SL", "TP1_HIT", "TP2_HIT", "SL_HIT", "EXPIRED"]]
         wins = [s for s in evaluated_signals if s.get("result_pnl_pct", 0) > 0]
         losses = [s for s in evaluated_signals if s.get("result_pnl_pct", 0) <= 0]
-        win_rate = round((len(wins) / len(evaluated_signals) * 100), 1) if evaluated_signals else 100.0
+        win_rate = round((len(wins) / len(evaluated_signals) * 100), 1) if evaluated_signals else 0.0
         
         total_pct_gains = sum(s.get("result_pnl_pct", 0) for s in evaluated_signals)
         simulated_gain_usd = (initial_balance * 0.02) * (total_pct_gains / 2.0) if evaluated_signals else 0.0

@@ -153,12 +153,19 @@ class PaperTradeService:
             timeframe_category = "SWING"
             max_duration_sec = 72 * 3600  # 3 days
 
+        current_spot = float(signal_data.get("current_price", entry_price))
+        # If entry is within 0.3% of current spot, treat as immediate market fill; otherwise pending limit
+        is_immediate_fill = abs(current_spot - entry_price) / max(current_spot, 1) <= 0.003
+
         record = {
             "id": signal_id,
             "timestamp": time.time(),
             "symbol": symbol,
             "action": action,
             "entry_price": entry_price,
+            "spot_at_creation": current_spot,
+            "entry_filled": is_immediate_fill,
+            "filled_at": time.time() if is_immediate_fill else None,
             "stop_loss": stop_loss,
             "take_profit_1": tp1,
             "take_profit_2": tp2,
@@ -166,19 +173,19 @@ class PaperTradeService:
             "hold_time_label": hold_time_str,
             "timeframe_category": timeframe_category,
             "max_duration_sec": max_duration_sec,
-            "status": "ACTIVE",  # ACTIVE | HIT_TP | HIT_SL | EXPIRED
+            "status": "ACTIVE",  # ACTIVE | HIT_TP | HIT_SL | EXPIRED | UNFILLED_CANCELLED
             "result_pnl_pct": 0.0,
-            "highest_price_seen": entry_price,
-            "lowest_price_seen": entry_price,
+            "highest_price_seen": current_spot,
+            "lowest_price_seen": current_spot,
             "exit_price": None,
             "evaluated_at": None,
             "proof_audit": {
                 "predicted_entry": entry_price,
                 "predicted_tp1": tp1,
                 "predicted_sl": stop_loss,
-                "peak_favorable_price": entry_price,
-                "deepest_adverse_price": entry_price,
-                "real_market_verification": "MONITORING_LIVE_BINANCE_TICKS"
+                "peak_favorable_price": current_spot,
+                "deepest_adverse_price": current_spot,
+                "real_market_verification": "FILLED_AT_MARKET" if is_immediate_fill else f"PENDING_LIMIT_FILL (Entry: ${entry_price:,.2f})"
             }
         }
 
@@ -187,7 +194,7 @@ class PaperTradeService:
         return {"recorded": True, "signal_id": signal_id}
 
     def evaluate_signals_against_price(self, symbol: str, live_price: float):
-        """Evaluate active AI signals against real-time market price with high/low wick tracking."""
+        """Evaluate active AI signals against real-time market price with strict limit fill verification."""
         if not live_price or live_price <= 0:
             return
 
@@ -203,60 +210,90 @@ class PaperTradeService:
                 tp = s.get("take_profit_1", 0)
                 created_at = s.get("timestamp", now)
                 max_sec = s.get("max_duration_sec", 6 * 3600)
+                entry_filled = s.get("entry_filled", False)
 
                 # Update live high and low wick records for proof
-                s["highest_price_seen"] = max(s.get("highest_price_seen", entry), live_price)
-                s["lowest_price_seen"] = min(s.get("lowest_price_seen", entry), live_price)
+                s["highest_price_seen"] = max(s.get("highest_price_seen", live_price), live_price)
+                s["lowest_price_seen"] = min(s.get("lowest_price_seen", live_price), live_price)
                 
                 s["proof_audit"]["peak_favorable_price"] = s["highest_price_seen"] if action == "BUY" else s["lowest_price_seen"]
                 s["proof_audit"]["deepest_adverse_price"] = s["lowest_price_seen"] if action == "BUY" else s["highest_price_seen"]
 
-                # Check Take Profit & Stop Loss
-                if action == "BUY":
-                    if live_price >= tp and tp > 0:
-                        s["status"] = "HIT_TP"
-                        s["exit_price"] = live_price
-                        s["result_pnl_pct"] = round(((tp - entry) / entry) * 100, 2) if entry else 0.0
-                        s["evaluated_at"] = now
-                        s["proof_audit"]["real_market_verification"] = f"TARGET REACHED: High wick touched ${live_price:.2f}"
+                # STEP 1: LIMIT ORDER FILL VALIDATION
+                if not entry_filled:
+                    if action == "BUY" and live_price <= entry:
+                        s["entry_filled"] = True
+                        s["filled_at"] = now
+                        s["proof_audit"]["real_market_verification"] = f"LIMIT FILLED: Price reached entry ${live_price:,.2f}"
                         changed = True
-                    elif live_price <= sl and sl > 0:
-                        s["status"] = "HIT_SL"
-                        s["exit_price"] = live_price
-                        s["result_pnl_pct"] = round(((sl - entry) / entry) * 100, 2) if entry else 0.0
-                        s["evaluated_at"] = now
-                        s["proof_audit"]["real_market_verification"] = f"STOPPED OUT: Low wick touched ${live_price:.2f}"
+                        entry_filled = True
+                    elif action == "SELL" and live_price >= entry:
+                        s["entry_filled"] = True
+                        s["filled_at"] = now
+                        s["proof_audit"]["real_market_verification"] = f"LIMIT FILLED: Price reached entry ${live_price:,.2f}"
                         changed = True
+                        entry_filled = True
                     elif (now - created_at) > max_sec:
-                        s["status"] = "EXPIRED"
-                        s["exit_price"] = live_price
-                        s["result_pnl_pct"] = round(((live_price - entry) / entry) * 100, 2) if entry else 0.0
+                        s["status"] = "UNFILLED_CANCELLED"
+                        s["result_pnl_pct"] = 0.0
                         s["evaluated_at"] = now
-                        s["proof_audit"]["real_market_verification"] = f"TIME EXPIRED: Exit price at ${live_price:.2f}"
+                        s["proof_audit"]["real_market_verification"] = f"EXPIRED UNFILLED: Market never reached limit entry ${entry:,.2f}"
                         changed = True
+                        continue
 
-                elif action == "SELL":
-                    if live_price <= tp and tp > 0:
-                        s["status"] = "HIT_TP"
-                        s["exit_price"] = live_price
-                        s["result_pnl_pct"] = round(((entry - tp) / entry) * 100, 2) if entry else 0.0
-                        s["evaluated_at"] = now
-                        s["proof_audit"]["real_market_verification"] = f"TARGET REACHED: Low wick touched ${live_price:.2f}"
-                        changed = True
-                    elif live_price >= sl and sl > 0:
-                        s["status"] = "HIT_SL"
-                        s["exit_price"] = live_price
-                        s["result_pnl_pct"] = round(((entry - sl) / entry) * 100, 2) if entry else 0.0
-                        s["evaluated_at"] = now
-                        s["proof_audit"]["real_market_verification"] = f"STOPPED OUT: High wick touched ${live_price:.2f}"
-                        changed = True
-                    elif (now - created_at) > max_sec:
-                        s["status"] = "EXPIRED"
-                        s["exit_price"] = live_price
-                        s["result_pnl_pct"] = round(((entry - live_price) / entry) * 100, 2) if entry else 0.0
-                        s["evaluated_at"] = now
-                        s["proof_audit"]["real_market_verification"] = f"TIME EXPIRED: Exit price at ${live_price:.2f}"
-                        changed = True
+                # STEP 2: POSITION EVALUATION (ONLY ONCE FILLED)
+                if entry_filled:
+                    if action == "BUY":
+                        # TP reached
+                        if tp > entry and live_price >= tp:
+                            s["status"] = "HIT_TP"
+                            s["exit_price"] = live_price
+                            s["result_pnl_pct"] = round(((tp - entry) / entry) * 100, 2) if entry else 0.0
+                            s["evaluated_at"] = now
+                            s["proof_audit"]["real_market_verification"] = f"TARGET REACHED: High wick touched ${live_price:,.2f}"
+                            changed = True
+                        # SL hit
+                        elif sl < entry and live_price <= sl and sl > 0:
+                            s["status"] = "HIT_SL"
+                            s["exit_price"] = live_price
+                            s["result_pnl_pct"] = round(((sl - entry) / entry) * 100, 2) if entry else 0.0
+                            s["evaluated_at"] = now
+                            s["proof_audit"]["real_market_verification"] = f"STOPPED OUT: Low wick touched ${live_price:,.2f}"
+                            changed = True
+                        # Time Expiration
+                        elif (now - created_at) > max_sec:
+                            s["status"] = "EXPIRED"
+                            s["exit_price"] = live_price
+                            s["result_pnl_pct"] = round(((live_price - entry) / entry) * 100, 2) if entry else 0.0
+                            s["evaluated_at"] = now
+                            s["proof_audit"]["real_market_verification"] = f"TIME EXPIRED: Exit price at ${live_price:,.2f}"
+                            changed = True
+
+                    elif action == "SELL":
+                        # TP reached
+                        if tp < entry and live_price <= tp and tp > 0:
+                            s["status"] = "HIT_TP"
+                            s["exit_price"] = live_price
+                            s["result_pnl_pct"] = round(((entry - tp) / entry) * 100, 2) if entry else 0.0
+                            s["evaluated_at"] = now
+                            s["proof_audit"]["real_market_verification"] = f"TARGET REACHED: Low wick touched ${live_price:,.2f}"
+                            changed = True
+                        # SL hit
+                        elif sl > entry and live_price >= sl and sl > 0:
+                            s["status"] = "HIT_SL"
+                            s["exit_price"] = live_price
+                            s["result_pnl_pct"] = round(((entry - sl) / entry) * 100, 2) if entry else 0.0
+                            s["evaluated_at"] = now
+                            s["proof_audit"]["real_market_verification"] = f"STOPPED OUT: High wick touched ${live_price:,.2f}"
+                            changed = True
+                        # Time Expiration
+                        elif (now - created_at) > max_sec:
+                            s["status"] = "EXPIRED"
+                            s["exit_price"] = live_price
+                            s["result_pnl_pct"] = round(((entry - live_price) / entry) * 100, 2) if entry else 0.0
+                            s["evaluated_at"] = now
+                            s["proof_audit"]["real_market_verification"] = f"TIME EXPIRED: Exit price at ${live_price:,.2f}"
+                            changed = True
 
         # Auto-Breakeven Trailing Stop for Open Positions
         if sym_upper in self.positions:
