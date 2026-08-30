@@ -22,7 +22,9 @@ import {
   XSquare, 
   Scissors, 
   CheckCircle2,
-  LineChart
+  LineChart,
+  History,
+  Clock
 } from "lucide-react";
 import TooltipHelper from "@/components/ui/TooltipHelper";
 
@@ -36,8 +38,10 @@ export default function PaperPortfolioWidget() {
     win_rate_pct: 0,
     total_trades: 0,
     active_positions: [],
-    equity_curve: []
+    equity_curve: [],
+    trade_history: []
   });
+  const [viewTab, setViewTab] = useState<"positions" | "history">("positions");
   const [orderQty, setOrderQty] = useState<number>(0.001);
   const [orderSide, setOrderSide] = useState<"BUY" | "SELL">("BUY");
   const [stopLossInput, setStopLossInput] = useState<string>("");
@@ -340,101 +344,195 @@ export default function PaperPortfolioWidget() {
         </button>
       </div>
 
-      {/* Open Positions List with Live Actions (Close, Scale 50%, Breakeven) */}
+      {/* Tab Navigation: Positions vs Trade History */}
+      <div className="flex border-b border-surface-border bg-[#0a0d13]">
+        <button
+          onClick={() => setViewTab("positions")}
+          className={`flex-1 py-1.5 text-center text-xs font-bold transition flex items-center justify-center space-x-1.5 ${
+            viewTab === "positions"
+              ? "text-accent-cyan border-b-2 border-accent-cyan bg-surface/30"
+              : "text-slate-500 hover:text-slate-300"
+          }`}
+        >
+          <Wallet className="w-3 h-3" />
+          <span>Open Positions ({portfolio?.active_positions?.length ?? 0})</span>
+        </button>
+        <button
+          onClick={() => setViewTab("history")}
+          className={`flex-1 py-1.5 text-center text-xs font-bold transition flex items-center justify-center space-x-1.5 ${
+            viewTab === "history"
+              ? "text-accent-purple border-b-2 border-accent-purple bg-surface/30"
+              : "text-slate-500 hover:text-slate-300"
+          }`}
+        >
+          <History className="w-3 h-3" />
+          <span>Trade History ({portfolio?.trade_history?.length ?? 0})</span>
+        </button>
+      </div>
+
+      {/* Main Tab Content Area */}
       <div className="flex-1 p-2 space-y-1.5 overflow-y-auto">
-        <span className="text-[10px] text-slate-500 font-bold px-1 uppercase tracking-wider block">
-          Open Positions ({portfolio?.active_positions?.length ?? 0})
-        </span>
+        {viewTab === "positions" ? (
+          <>
+            {portfolio?.active_positions?.length === 0 ? (
+              <p className="text-center text-slate-600 py-4 text-[11px]">No active open positions.</p>
+            ) : (
+              portfolio?.active_positions?.map((pos: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="p-2 rounded-lg bg-[#111722] border border-surface-border space-y-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1.5">
+                      <span className="font-bold text-white">{pos.symbol}</span>
+                      <span
+                        className={`text-[9px] px-1 rounded font-bold ${
+                          pos.side === "LONG" ? "bg-accent-green/20 text-accent-green" : "bg-accent-red/20 text-accent-red"
+                        }`}
+                      >
+                        {pos.side}
+                      </span>
+                      {pos.is_breakeven_locked && (
+                        <span className="text-[9px] px-1 rounded bg-accent-green text-black font-black flex items-center space-x-0.5">
+                          <ShieldCheck className="w-2.5 h-2.5" />
+                          <span>BREAKEVEN</span>
+                        </span>
+                      )}
+                    </div>
 
-        {portfolio?.active_positions?.length === 0 ? (
-          <p className="text-center text-slate-600 py-3 text-[11px]">No active open positions.</p>
-        ) : (
-          portfolio?.active_positions?.map((pos: any, idx: number) => (
-            <div
-              key={idx}
-              className="p-2 rounded-lg bg-[#111722] border border-surface-border space-y-1.5"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-1.5">
-                  <span className="font-bold text-white">{pos.symbol}</span>
-                  <span
-                    className={`text-[9px] px-1 rounded font-bold ${
-                      pos.side === "LONG" ? "bg-accent-green/20 text-accent-green" : "bg-accent-red/20 text-accent-red"
-                    }`}
-                  >
-                    {pos.side}
-                  </span>
-                  {pos.is_breakeven_locked && (
-                    <span className="text-[9px] px-1 rounded bg-accent-green text-black font-black flex items-center space-x-0.5">
-                      <ShieldCheck className="w-2.5 h-2.5" />
-                      <span>BREAKEVEN</span>
-                    </span>
+                    <div className="text-right">
+                      <span
+                        className={`font-bold block text-xs ${
+                          pos.unrealized_pnl >= 0 ? "text-accent-green" : "text-accent-red"
+                        }`}
+                      >
+                        {pos.unrealized_pnl >= 0 ? `+$${pos.unrealized_pnl}` : `-$${Math.abs(pos.unrealized_pnl)}`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-slate-400">
+                    <span>Entry: ${pos.entry_price}</span>
+                    <span>TP: ${pos.take_profit || "—"}</span>
+                    <span>SL: ${pos.stop_loss || "—"}</span>
+                  </div>
+
+                  {pos.take_profit && (
+                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="bg-accent-green h-full transition-all duration-500"
+                        style={{ width: `${pos.progress_to_tp_pct ?? 0}%` }}
+                      />
+                    </div>
                   )}
+
+                  {/* Position Action Buttons */}
+                  <div className="grid grid-cols-3 gap-1 pt-1 border-t border-surface-border/50 text-[9px]">
+                    <button
+                      onClick={() => handleClosePosition(pos.symbol)}
+                      className="py-1 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 rounded flex items-center justify-center space-x-0.5 transition"
+                      title="Close entire position at market price"
+                    >
+                      <XSquare className="w-2.5 h-2.5" />
+                      <span>Close</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleScalePosition(pos.symbol)}
+                      className="py-1 bg-accent-yellow/10 hover:bg-accent-yellow/20 text-accent-yellow border border-accent-yellow/30 rounded flex items-center justify-center space-x-0.5 transition"
+                      title="Take partial profit on 50% of position"
+                    >
+                      <Scissors className="w-2.5 h-2.5" />
+                      <span>50% Out</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleLockBreakeven(pos.symbol)}
+                      disabled={pos.is_breakeven_locked}
+                      className={`py-1 rounded flex items-center justify-center space-x-0.5 transition ${
+                        pos.is_breakeven_locked
+                          ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                          : "bg-accent-green/10 hover:bg-accent-green/20 text-accent-green border border-accent-green/30"
+                      }`}
+                      title="Move Stop Loss to Entry price ($0 risk)"
+                    >
+                      <ShieldCheck className="w-2.5 h-2.5" />
+                      <span>Breakeven</span>
+                    </button>
+                  </div>
                 </div>
-
-                <div className="text-right">
-                  <span
-                    className={`font-bold block text-xs ${
-                      pos.unrealized_pnl >= 0 ? "text-accent-green" : "text-accent-red"
-                    }`}
-                  >
-                    {pos.unrealized_pnl >= 0 ? `+$${pos.unrealized_pnl}` : `-$${Math.abs(pos.unrealized_pnl)}`}
-                  </span>
+              ))
+            )}
+          </>
+        ) : (
+          /* Persistent Closed Trade History View */
+          <>
+            {portfolio?.trade_history?.length === 0 ? (
+              <p className="text-center text-slate-600 py-4 text-[11px]">No closed trades in history yet.</p>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between px-1 text-[9px] text-slate-500 font-bold uppercase">
+                  <span>Symbol & Type</span>
+                  <span>Exit / P&L</span>
                 </div>
+                {portfolio?.trade_history?.map((t: any, idx: number) => {
+                  const pnl = Number(t.realized_pnl ?? 0);
+                  const pnlPct = Number(t.pnl_pct ?? 0);
+                  const isProfit = pnl >= 0;
+                  return (
+                    <div
+                      key={idx}
+                      className="p-2 rounded-lg bg-[#111722] border border-surface-border space-y-1 hover:bg-[#151c2a] transition"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="font-bold text-white text-xs">{t.symbol}</span>
+                          <span
+                            className={`text-[9px] px-1 rounded font-bold ${
+                              t.side === "LONG" ? "bg-accent-green/20 text-accent-green" : "bg-accent-red/20 text-accent-red"
+                            }`}
+                          >
+                            {t.side}
+                          </span>
+                          <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-400">
+                            {t.exit_reason || "CLOSED"}
+                          </span>
+                        </div>
+
+                        <div className="text-right">
+                          <span
+                            className={`font-black text-xs block ${
+                              isProfit ? "text-accent-green" : "text-accent-red"
+                            }`}
+                          >
+                            {isProfit ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`}
+                            <span className="text-[10px] font-normal ml-1">
+                              ({isProfit ? `+${pnlPct.toFixed(1)}%` : `${pnlPct.toFixed(1)}%`})
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>Entry: ${Number(t.entry_price).toFixed(2)} ➔ Exit: ${Number(t.exit_price).toFixed(2)}</span>
+                        <span className="text-[9px] text-slate-500 flex items-center space-x-0.5">
+                          <Clock className="w-2.5 h-2.5" />
+                          <span>{t.closed_at ? new Date(t.closed_at * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Recently"}</span>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-
-              <div className="flex items-center justify-between text-[10px] text-slate-400">
-                <span>Entry: ${pos.entry_price}</span>
-                <span>TP: ${pos.take_profit || "—"}</span>
-                <span>SL: ${pos.stop_loss || "—"}</span>
-              </div>
-
-              {pos.take_profit && (
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-accent-green h-full transition-all duration-500"
-                    style={{ width: `${pos.progress_to_tp_pct ?? 0}%` }}
-                  />
-                </div>
-              )}
-
-              {/* Position Action Buttons */}
-              <div className="grid grid-cols-3 gap-1 pt-1 border-t border-surface-border/50 text-[9px]">
-                <button
-                  onClick={() => handleClosePosition(pos.symbol)}
-                  className="py-1 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 rounded flex items-center justify-center space-x-0.5 transition"
-                  title="Close entire position at market price"
-                >
-                  <XSquare className="w-2.5 h-2.5" />
-                  <span>Close</span>
-                </button>
-
-                <button
-                  onClick={() => handleScalePosition(pos.symbol)}
-                  className="py-1 bg-accent-yellow/10 hover:bg-accent-yellow/20 text-accent-yellow border border-accent-yellow/30 rounded flex items-center justify-center space-x-0.5 transition"
-                  title="Take partial profit on 50% of position"
-                >
-                  <Scissors className="w-2.5 h-2.5" />
-                  <span>50% Out</span>
-                </button>
-
-                <button
-                  onClick={() => handleLockBreakeven(pos.symbol)}
-                  disabled={pos.is_breakeven_locked}
-                  className={`py-1 rounded flex items-center justify-center space-x-0.5 transition ${
-                    pos.is_breakeven_locked
-                      ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                      : "bg-accent-green/10 hover:bg-accent-green/20 text-accent-green border border-accent-green/30"
-                  }`}
-                  title="Move Stop Loss to Entry price ($0 risk)"
-                >
-                  <ShieldCheck className="w-2.5 h-2.5" />
-                  <span>Breakeven</span>
-                </button>
-              </div>
-            </div>
-          ))
+            )}
+          </>
         )}
+      </div>
+
+      {/* Persistent Storage Badge */}
+      <div className="px-3 py-1 bg-[#090d14] border-t border-surface-border text-[9px] text-slate-500 flex items-center justify-between font-mono">
+        <span>💾 Local & Cloud Persistent Database</span>
+        <span className="text-accent-cyan">Auto-Synced</span>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ from typing import List
 import os
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "AI-Powered Trading Command Centre"
+    PROJECT_NAME: str = "MicroAlpha Studio by Salah Alioui"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Trading Command Centre | Multi-Asset Terminal",
-  description: "Next-generation institutional trading intelligence and autonomous AI copilot dashboard.",
+  title: "MicroAlpha Studio | AI Trading Command Centre by Salah Alioui",
+  description: "Institutional AI trading intelligence, micro-cap growth screener, and simulated trading sandbox by Salah Alioui.",
 };
 
 export default function RootLayout({

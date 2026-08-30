@@ -1,12 +1,13 @@
-# ⚡ Noble Borg: AI-Powered Trading Command Centre & Micro-Account Growth Sandbox
+# ⚡ MicroAlpha Studio: AI Trading Command Centre & Micro-Account Growth Sandbox
+*Crafted by Salah Alioui*
 
-![Noble Borg Header](https://img.shields.io/badge/Status-Production%20Ready-00f0ff?style=for-the-badge)
+![MicroAlpha Studio Header](https://img.shields.io/badge/Status-Production%20Ready-00f0ff?style=for-the-badge)
 ![Next.js 14](https://img.shields.io/badge/Next.js-14.2-black?style=for-the-badge&logo=next.js)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?style=for-the-badge&logo=fastapi)
 ![Gemini AI](https://img.shields.io/badge/Gemini%20AI-2.5%20Flash-8E75B2?style=for-the-badge&logo=google)
 ![Binance](https://img.shields.io/badge/Binance-Live%20Stream-F3BA2F?style=for-the-badge&logo=binance)
 
-Noble Borg is an institutional-grade, AI-assisted multi-asset trading command centre designed specifically to empower **both complete beginners starting with small accounts ($10–$100)** and advanced traders.
+MicroAlpha Studio is an institutional-grade, AI-assisted multi-asset trading command centre designed by **Salah Alioui** specifically to empower **both complete beginners starting with small accounts ($10–$100)** and advanced traders.
 
 ---
 

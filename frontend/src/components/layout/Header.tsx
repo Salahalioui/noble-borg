@@ -48,9 +48,12 @@ export default function Header() {
             <Terminal className="w-4 h-4 text-black font-bold" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-white tracking-wider text-xs sm:text-sm flex items-center space-x-0.5">
-              <span>NOBLE</span>
-              <span className="text-accent-cyan">BORG</span>
+            <span className="font-extrabold text-white tracking-wider text-xs sm:text-sm flex items-center space-x-1">
+              <span>MICRO</span>
+              <span className="text-accent-cyan">ALPHA</span>
+              <span className="text-[9px] px-1 py-0.2 rounded bg-accent-purple/20 text-accent-purple border border-accent-purple/30 font-bold hidden sm:inline">
+                STUDIO
+              </span>
             </span>
           </div>
         </div>
