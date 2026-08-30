@@ -7,7 +7,12 @@ from app.core.cache import cache
 from app.core.rate_limiter import rate_limiter
 from app.core.websocket_manager import ws_manager
 
-BINANCE_REST_URL = "https://api.binance.com/api/v3"
+BINANCE_ENDPOINTS = [
+    "https://data-api.binance.vision/api/v3",
+    "https://api.binance.com/api/v3",
+    "https://api1.binance.com/api/v3",
+    "https://api3.binance.com/api/v3"
+]
 BINANCE_WS_URL = "wss://stream.binance.com:9443/ws"
 
 class BinanceService:
@@ -18,7 +23,7 @@ class BinanceService:
         self._tracked_symbols = ["btcusdt", "ethusdt", "solusdt", "bnbusdt", "xrpusdt", "dogeusdt"]
 
     async def get_ticker_price(self, symbol: str) -> Optional[Dict[str, Any]]:
-        """Fetch current spot price."""
+        """Fetch current spot price with multi-endpoint cloud fallback."""
         symbol_upper = symbol.upper()
         cache_key = f"binance:price:{symbol_upper}"
         cached = await cache.get(cache_key)
@@ -26,20 +31,21 @@ class BinanceService:
             return cached
             
         await rate_limiter.acquire("binance", cost=1.0)
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(f"{BINANCE_REST_URL}/ticker/price", params={"symbol": symbol_upper})
-                if resp.status_code == 200:
-                    data = resp.json()
-                    result = {
-                        "symbol": data["symbol"],
-                        "price": float(data["price"]),
-                        "timestamp": int(asyncio.get_event_loop().time() * 1000)
-                    }
-                    await cache.set(cache_key, result, ttl_seconds=3)
-                    return result
-        except Exception as e:
-            print(f"[BinanceService] Error fetching price for {symbol}: {e}")
+        async with httpx.AsyncClient(timeout=6.0) as client:
+            for base_url in BINANCE_ENDPOINTS:
+                try:
+                    resp = await client.get(f"{base_url}/ticker/price", params={"symbol": symbol_upper})
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        result = {
+                            "symbol": data["symbol"],
+                            "price": float(data["price"]),
+                            "timestamp": int(asyncio.get_event_loop().time() * 1000)
+                        }
+                        await cache.set(cache_key, result, ttl_seconds=3)
+                        return result
+                except Exception:
+                    continue
         return None
 
     async def get_24hr_ticker(self, symbol: Optional[str] = None) -> Any:
@@ -50,20 +56,21 @@ class BinanceService:
             return cached
             
         await rate_limiter.acquire("binance", cost=1.0)
-        try:
-            async with httpx.AsyncClient(timeout=8.0) as client:
-                params = {"symbol": symbol.upper()} if symbol else {}
-                resp = await client.get(f"{BINANCE_REST_URL}/ticker/24hr", params=params)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    await cache.set(cache_key, data, ttl_seconds=10)
-                    return data
-        except Exception as e:
-            print(f"[BinanceService] Error fetching 24hr ticker: {e}")
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            params = {"symbol": symbol.upper()} if symbol else {}
+            for base_url in BINANCE_ENDPOINTS:
+                try:
+                    resp = await client.get(f"{base_url}/ticker/24hr", params=params)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        await cache.set(cache_key, data, ttl_seconds=10)
+                        return data
+                except Exception:
+                    continue
         return None
 
     async def get_order_book(self, symbol: str, limit: int = 50) -> Optional[Dict[str, Any]]:
-        """Fetch Level-2 Order Book depth."""
+        """Fetch Level-2 Order Book depth with cloud fallback."""
         symbol_upper = symbol.upper()
         cache_key = f"binance:depth:{symbol_upper}:{limit}"
         cached = await cache.get(cache_key)
@@ -71,27 +78,26 @@ class BinanceService:
             return cached
             
         await rate_limiter.acquire("binance", cost=2.0)
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(f"{BINANCE_REST_URL}/depth", params={"symbol": symbol_upper, "limit": limit})
-                if resp.status_code == 200:
-                    data = resp.json()
-                    result = {
-                        "symbol": symbol_upper,
-                        "lastUpdateId": data["lastUpdateId"],
-                        "bids": [[float(price), float(qty)] for price, qty in data["bids"]],
-                        "asks": [[float(price), float(qty)] for price, qty in data["asks"]]
-                    }
-                    await cache.set(cache_key, result, ttl_seconds=2)
-                    return result
-        except Exception as e:
-            print(f"[BinanceService] Error fetching depth for {symbol}: {e}")
+        async with httpx.AsyncClient(timeout=6.0) as client:
+            for base_url in BINANCE_ENDPOINTS:
+                try:
+                    resp = await client.get(f"{base_url}/depth", params={"symbol": symbol_upper, "limit": limit})
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        result = {
+                            "symbol": symbol_upper,
+                            "lastUpdateId": data["lastUpdateId"],
+                            "bids": [[float(price), float(qty)] for price, qty in data["bids"]],
+                            "asks": [[float(price), float(qty)] for price, qty in data["asks"]]
+                        }
+                        await cache.set(cache_key, result, ttl_seconds=2)
+                        return result
+                except Exception:
+                    continue
         return None
 
     async def get_klines(self, symbol: str, interval: str = "1h", limit: int = 200) -> List[Dict[str, Any]]:
-        """Fetch OHLCV candlestick historical data.
-        Intervals: 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w
-        """
+        """Fetch OHLCV candlestick historical data."""
         symbol_upper = symbol.upper()
         cache_key = f"binance:klines:{symbol_upper}:{interval}:{limit}"
         cached = await cache.get(cache_key)
@@ -99,28 +105,29 @@ class BinanceService:
             return cached
             
         await rate_limiter.acquire("binance", cost=2.0)
-        try:
-            async with httpx.AsyncClient(timeout=8.0) as client:
-                resp = await client.get(
-                    f"{BINANCE_REST_URL}/klines", 
-                    params={"symbol": symbol_upper, "interval": interval, "limit": limit}
-                )
-                if resp.status_code == 200:
-                    raw_candles = resp.json()
-                    formatted = []
-                    for c in raw_candles:
-                        formatted.append({
-                            "time": int(c[0] / 1000),  # TradingView format (seconds)
-                            "open": float(c[1]),
-                            "high": float(c[2]),
-                            "low": float(c[3]),
-                            "close": float(c[4]),
-                            "volume": float(c[5])
-                        })
-                    await cache.set(cache_key, formatted, ttl_seconds=15)
-                    return formatted
-        except Exception as e:
-            print(f"[BinanceService] Error fetching klines for {symbol}: {e}")
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            for base_url in BINANCE_ENDPOINTS:
+                try:
+                    resp = await client.get(
+                        f"{base_url}/klines", 
+                        params={"symbol": symbol_upper, "interval": interval, "limit": limit}
+                    )
+                    if resp.status_code == 200:
+                        raw_candles = resp.json()
+                        formatted = []
+                        for c in raw_candles:
+                            formatted.append({
+                                "time": int(c[0] / 1000),
+                                "open": float(c[1]),
+                                "high": float(c[2]),
+                                "low": float(c[3]),
+                                "close": float(c[4]),
+                                "volume": float(c[5])
+                            })
+                        await cache.set(cache_key, formatted, ttl_seconds=15)
+                        return formatted
+                except Exception:
+                    continue
         return []
 
     async def start_ws_stream(self):
