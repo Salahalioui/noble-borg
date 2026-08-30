@@ -240,14 +240,21 @@ export default function TradingViewChart() {
 
   // 2. Fetch/Update chart data whenever activeSymbol, timeframe, or isCrypto changes
   useEffect(() => {
+    lastCandleRef.current = null;
     loadChartData();
   }, [loadChartData]);
 
-  // 3. Real-time tick update to active candle in-place
+  // 3. Real-time tick update to active candle in-place (with cross-symbol sanity protection)
   useEffect(() => {
     if (!candleSeriesRef.current || !currentPrice || !lastCandleRef.current) return;
     try {
       const current = lastCandleRef.current;
+      
+      // Prevent stale ticks from other symbols (e.g. BTC tick applied to SUI)
+      if (current.close > 0 && Math.abs(currentPrice - current.close) / current.close > 0.45) {
+        return;
+      }
+
       current.close = currentPrice;
       if (currentPrice > current.high) current.high = currentPrice;
       if (currentPrice < current.low) current.low = currentPrice;

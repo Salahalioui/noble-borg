@@ -1,19 +1,83 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8001";
 
 export async function fetchCryptoPrice(symbol: string = "BTCUSDT") {
-  const res = await fetch(`${BACKEND_URL}/api/crypto/price?symbol=${symbol}`);
+  const sym = symbol.toUpperCase();
+  // 1. Direct Ultra-Fast Public Binance Vision CDN (~50ms)
+  try {
+    const res = await fetch(`https://data-api.binance.vision/api/v3/ticker/24hr?symbol=${sym}`);
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        symbol: data.symbol,
+        price: parseFloat(data.lastPrice),
+        change_pct_24h: parseFloat(data.priceChangePercent),
+        high_24h: parseFloat(data.highPrice),
+        low_24h: parseFloat(data.lowPrice),
+        volume_24h: parseFloat(data.volume),
+        timestamp: data.closeTime
+      };
+    }
+  } catch {
+    // continue to backend
+  }
+
+  // 2. Backend Fallback
+  const res = await fetch(`${BACKEND_URL}/api/crypto/price?symbol=${sym}`);
   if (!res.ok) throw new Error(`Failed to fetch crypto price: ${res.statusText}`);
   return res.json();
 }
 
 export async function fetchCryptoKlines(symbol: string = "BTCUSDT", interval: string = "1h", limit: number = 200) {
-  const res = await fetch(`${BACKEND_URL}/api/crypto/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+  const sym = symbol.toUpperCase();
+  // 1. Direct Ultra-Fast Public Binance Vision CDN (~60ms)
+  try {
+    const res = await fetch(`https://data-api.binance.vision/api/v3/klines?symbol=${sym}&interval=${interval}&limit=${limit}`);
+    if (res.ok) {
+      const raw = await res.json();
+      if (Array.isArray(raw) && raw.length > 0) {
+        const candles = raw.map((c: any) => ({
+          time: Math.floor(c[0] / 1000),
+          open: parseFloat(c[1]),
+          high: parseFloat(c[2]),
+          low: parseFloat(c[3]),
+          close: parseFloat(c[4]),
+          volume: parseFloat(c[5])
+        }));
+        return { symbol: sym, interval, count: candles.length, candles };
+      }
+    }
+  } catch {
+    // continue to backend
+  }
+
+  // 2. Backend Fallback
+  const res = await fetch(`${BACKEND_URL}/api/crypto/klines?symbol=${sym}&interval=${interval}&limit=${limit}`);
   if (!res.ok) throw new Error("Failed to fetch klines");
   return res.json();
 }
 
 export async function fetchCryptoDepth(symbol: string = "BTCUSDT", limit: number = 50) {
-  const res = await fetch(`${BACKEND_URL}/api/crypto/depth?symbol=${symbol}&limit=${limit}`);
+  const sym = symbol.toUpperCase();
+  // 1. Direct Ultra-Fast Public Binance Vision CDN (~50ms)
+  try {
+    const res = await fetch(`https://data-api.binance.vision/api/v3/depth?symbol=${sym}&limit=${limit}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.bids && data?.asks) {
+        return {
+          symbol: sym,
+          lastUpdateId: data.lastUpdateId,
+          bids: data.bids.map((b: any) => [parseFloat(b[0]), parseFloat(b[1])]),
+          asks: data.asks.map((a: any) => [parseFloat(a[0]), parseFloat(a[1])])
+        };
+      }
+    }
+  } catch {
+    // continue to backend
+  }
+
+  // 2. Backend Fallback
+  const res = await fetch(`${BACKEND_URL}/api/crypto/depth?symbol=${sym}&limit=${limit}`);
   if (!res.ok) throw new Error("Failed to fetch depth");
   return res.json();
 }

@@ -72,12 +72,34 @@ export const useTradingStore = create<TradingStore>((set) => ({
   setActiveSymbol: (symbol, isCrypto = true) => {
     const sym = symbol.toUpperCase();
     set((state) => {
-      const match = state.watchlist.find((w) => w.symbol === sym);
+      const knownPrices: Record<string, number> = {
+        "BTCUSDT": 78950.0,
+        "ETHUSDT": 2750.0,
+        "SOLUSDT": 185.0,
+        "SUIUSDT": 3.45,
+        "NEARUSDT": 6.80,
+        "PEPEUSDT": 0.0000195,
+        "RENDERUSDT": 8.20,
+        "INJUSDT": 24.50,
+        "SEIUSDT": 0.48,
+        "XRPUSDT": 2.40,
+        "DOGEUSDT": 0.28,
+        "PLTR": 42.50,
+        "SOFI": 9.80,
+        "HOOD": 22.40,
+        "MARA": 19.50,
+        "RIOT": 11.20,
+        "NVDA": 128.5,
+        "AAPL": 226.4,
+        "TSLA": 218.0,
+        "SPY": 562.1
+      };
+      const initialPrice = knownPrices[sym] || (state.watchlist.find((w) => w.symbol === sym)?.price || 0);
       return {
         activeSymbol: sym,
         isCrypto,
-        currentPrice: match ? match.price : 0,
-        change24h: match ? match.change24h : 0,
+        currentPrice: initialPrice,
+        change24h: 0,
         aiDebateResult: null,
       };
     });
