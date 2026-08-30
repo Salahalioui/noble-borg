@@ -19,8 +19,8 @@ class AICouncilService:
     def __init__(self):
         self.api_key = settings.GEMINI_API_KEY
         self.client = None
-        self.primary_model = "gemini-3.7-flash"
-        self.fallback_model = "gemini-2.0-flash"
+        self.primary_model = "gemini-2.5-flash"
+        self.fallback_model = "gemini-flash-latest"
         
         if GENAI_AVAILABLE and self.api_key:
             try:

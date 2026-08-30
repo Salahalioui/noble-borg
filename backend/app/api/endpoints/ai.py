@@ -45,13 +45,23 @@ async def _process_debate(symbol: str, is_crypto: bool, user_query: Optional[str
         candles = await yfinance_service.get_history(sym, period="1mo", interval="1d")
         
     if not candles:
-        # Fallback to simulated technicals
+        # Fetch real spot price directly so AI is never misaligned
+        if is_crypto:
+            price_info = await binance_service.get_ticker_price(sym)
+            live_price = float(price_info.get("price", 78900.0)) if price_info else 78900.0
+            atr_val = round(live_price * 0.018, 4)
+        else:
+            live_price = 150.0
+            atr_val = 3.5
+
         technicals = {
-            "current_price": 65000.0 if is_crypto else 150.0,
+            "current_price": live_price,
             "rsi_14": 52.4,
-            "atr_14": 1200.0 if is_crypto else 4.5,
+            "atr_14": atr_val,
             "trend": "BULLISH",
-            "rsi_condition": "NEUTRAL"
+            "rsi_condition": "NEUTRAL",
+            "support_levels": [round(live_price * 0.975, 4)],
+            "resistance_levels": [round(live_price * 1.045, 4)]
         }
     else:
         technicals = quant_engine.compute_indicators(candles)

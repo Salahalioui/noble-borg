@@ -7,12 +7,17 @@ import { useTradingStore } from "@/store/useTradingStore";
 import { fetchCryptoPrice, fetchStockQuote } from "@/lib/api";
 
 export default function CommandCentreDashboard() {
+  const [mounted, setMounted] = React.useState(false);
   const { 
     activeSymbol, 
     isCrypto, 
     updateTickerPrice, 
     setBackendConnected 
   } = useTradingStore();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 1. Initial REST Price Fetch & Polling Fallback
   useEffect(() => {
